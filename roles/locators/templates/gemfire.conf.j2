@@ -1,0 +1,15 @@
+GEMFIRE_WORKING_DIR={{ gemfire_working_dir }}
+
+JVM_ARGS= {% for config in jvmlocatorconfig %}
+ --J={{ config }}
+{%- if loop.last %}{% endif %}
+{% endfor %}
+
+
+GEMFIRE_OPTS=\
+  --dir={{ gemfire_working_dir }} \
+  --name={{ ansible_hostname }} \
+  --port={{ locator_port }} \
+  --enable-cluster-configuration=true \
+  --force=true \
+  --properties-file=/etc/gemfire.properties

@@ -1,0 +1,39 @@
+---
+
+- name: check if ntp is installed
+  yum:
+    name: ntp
+  register: is_ntp_installed
+
+- name: Install NTP when {{ is_ntp_installed }}
+  yum: name=ntp state=installed
+  when: is_ntp_installed.rc == 1
+
+- name: set timezone
+  shell: timedatectl set-timezone {{ timezone }}
+
+- name: remove ntp pool servers
+  lineinfile:
+    dest: /etc/ntp.conf
+    state: absent
+    regexp: '^server'
+
+- name: add ntp servers
+  lineinfile:
+    dest: /etc/ntp.conf
+    line: server {{ item }} iburst
+  with_items: "{{ ntp_servers }}"
+  notify:
+    - restart ntpd
+
+- name: stop ntp
+  service: name=ntpd state=stopped enabled=yes
+
+- name: Sync time initialy
+  shell: ntpdate {{ ntp_server }}
+
+- name: start ntp
+  service: name=ntpd state=started enabled=yes
+
+- name: Sync hwclock
+  shell: hwclock -w

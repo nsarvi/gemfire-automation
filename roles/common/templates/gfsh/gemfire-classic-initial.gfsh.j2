@@ -1,0 +1,7 @@
+create disk-store --name=pdx --dir={{ gemfire_user_home }}/data/pdx --max-oplog-size=10
+create disk-store --name=data --dir={{ gemfire_user_home }}/data --max-oplog-size=10
+sleep --time=5
+deploy --dir={{ gemfire_user_home }}/deploy
+create region --name=customer --type=PARTITION_REDUNDANT_PERSISTENT --cache-listener=io.pivotal.bds.gemfire.testapp.classic.listener.CustomerCacheListener --disk-store=data --skip-if-exists
+create region --name=customer-order --type=PARTITION_REDUNDANT_PERSISTENT --cache-listener=io.pivotal.bds.gemfire.testapp.classic.listener.CustomerCacheListener --disk-store=data --skip-if-exists
+create region --name=item --type=PARTITION_REDUNDANT_PERSISTENT --cache-listener=io.pivotal.bds.gemfire.testapp.classic.listener.CustomerCacheListener --disk-store=data --skip-if-exists

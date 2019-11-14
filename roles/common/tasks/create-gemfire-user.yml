@@ -1,0 +1,17 @@
+---
+- name: create gemfire group
+  group:
+    name: "{{ gemfire_group }}"
+    state: present
+
+- name: create gemfire user
+  user:
+    name: "{{ gemfire_user }}"
+    comment: 'Gemfire Admin'
+    createhome: yes
+    shell: /bin/bash
+    generate_ssh_key: no
+    groups: "{{ gemfire_group }}"
+    append: yes
+    state: present
+  changed_when: False

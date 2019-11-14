@@ -1,0 +1,9 @@
+[locators]
+rhel1 hostname_for_clients=rhel1.local
+
+[cacheservers]
+rhel2 hostname_for_clients=rhel2.local
+
+[targets]
+rhel1     ansible_connection=ssh        ansible_user=root
+rhel2     ansible_connection=ssh        ansible_user=root

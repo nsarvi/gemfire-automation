@@ -1,0 +1,17 @@
+# Performs locator and cache server restart
+---
+- name: configure TLS for {{ ssl_configured }}
+  include_tasks: configure-ssl-gemfire.yml
+  when: ssl_configured is defined and ssl_configured != "" and ssl_provider == "self"
+
+- name: start the gemfire classic locators and {{ ssl_configured }}
+  include_tasks: restart-gemfire-basic.yml
+  when: inventory_hostname in groups['locators']
+
+- name: sleep to ensure locators are fully functional
+  pause:
+    seconds: 10
+
+- name: start the gemfire classic servers
+  include_tasks: restart-gemfire-basic.yml
+  when: inventory_hostname in groups['cacheservers']

@@ -1,0 +1,208 @@
+# Gemfire deployment configurations
+gemfire_user: gemfire
+gemfire_group: gemfire
+server_port: 40404
+locator_port: 10334
+cluster_name: citi-mvp-{{ cluster_type }}-cluster
+jdk_version: 1.8.0_211
+jdk_home_path: /opt/jdk/
+jdk_file_name: jdk-8u211-linux-x64.tar.gz
+gemfire_version: 9.7.2
+gemfire_base_name: pivotal-gemfire-{{ gemfire_version }}
+gemfire_home: /opt/middleware/pivotal/
+gemfire_file_name: "{{ gemfire_base_name }}.tgz"
+gemfire_data_dir: /opt/gemfiredata/
+gemfire_log_dir: /var/log/gemfire
+gemfire_working_dir: /opt/gemfireworking
+
+# clock and ntp servers
+timezone: America/Chicago
+ntp_servers:
+  - 0.rhel.pool.ntp.org
+  - 1.rhel.pool.ntp.org
+
+# Sysctl settings
+sysctlconfig:
+  net.ipv4.ip_forward: 0
+  net.ipv4.conf.default.rp_filter: 1
+  net.ipv4.conf.default.accept_source_route: 0
+  kernel.sysrq: 1
+  kernel.core_uses_pid: 1
+  kernel.msgmnb: 65536
+  kernel.msgmax: 65536
+  kernel.shmmax: 68719476736
+  net.ipv4.tcp_syncookies: 0
+  kernel.shmall: 4294967296
+  net.core.rmem_default: 1024000
+  net.core.wmem_default: 1024000
+  fs.file-max: 2097152
+  vm.swappiness: 0
+  net.core.somaxconn: 4096
+  net.core.netdev_max_backlog: 4096
+  net.core.rmem_max: 16777216
+  net.core.wmem_max: 16777216
+  net.ipv4.tcp_wmem: 4096 12582912 16777216
+  net.ipv4.tcp_rmem: 4096 12582912 16777216
+  net.ipv4.tcp_max_syn_backlog: 30000
+
+# limits conf
+limitsconfig:
+  - { domain: '{{ gemfire_user }}', limit_type: 'soft', limit_item: 'nofile', value: '63536'  }
+  - { domain: '{{ gemfire_user }}', limit_type: 'hard', limit_item: 'nofile', value: '63536'  }
+  - { domain: '{{ gemfire_user }}', limit_type: 'hard', limit_item: 'nproc', value: 'unlimited'  }
+  - { domain: '{{ gemfire_user }}', limit_type: 'soft', limit_item: 'nproc', value: '501408'  }
+  - { domain: '{{ gemfire_user }}', limit_type: 'hard', limit_item: 'core', value: 'unlimited'  }
+  - { domain: '{{ gemfire_user }}', limit_type: 'soft', limit_item: 'core', value: 'unlimited'  }
+  - { domain: '{{ gemfire_user }}', limit_type: 'hard', limit_item: 'data', value: 'unlimited'  }
+  - { domain: '{{ gemfire_user }}', limit_type: 'soft', limit_item: 'data', value: 'unlimited'  }
+  - { domain: '{{ gemfire_user }}', limit_type: 'hard', limit_item: 'fsize', value: 'unlimited'  }
+  - { domain: '{{ gemfire_user }}', limit_type: 'soft', limit_item: 'fsize', value: 'unlimited'  }
+  - { domain: '{{ gemfire_user }}', limit_type: 'hard', limit_item: 'sigpending', value: '127881'  }
+  - { domain: '{{ gemfire_user }}', limit_type: 'soft', limit_item: 'sigpending', value: '127881'  }
+  - { domain: '{{ gemfire_user }}', limit_type: 'hard', limit_item: 'msgqueue', value: '819200'  }
+  - { domain: '{{ gemfire_user }}', limit_type: 'soft', limit_item: 'msgqueue', value: '819200'  }
+  - { domain: '{{ gemfire_user }}', limit_type: 'hard', limit_item: 'stack', value: 'unlimited'  }
+  - { domain: '{{ gemfire_user }}', limit_type: 'soft', limit_item: 'stack', value: 'unlimited'  }
+  - { domain: '{{ gemfire_user }}', limit_type: 'hard', limit_item: 'cpu', value: 'unlimited'  }
+  - { domain: '{{ gemfire_user }}', limit_type: 'soft', limit_item: 'cpu', value: 'unlimited'  }
+
+# JVM locator configurations
+jvmlocatorconfig:
+  - -Xms2g
+  - -Xmx2g
+  - -XX:NewSize=512m
+  - -XX:MaxNewSize=512m
+  - -XX:+UseParNewGC
+  - -XX:+DisableExplicitGC
+  - -XX:+PrintGC
+  - -XX:+PrintGCDetails
+  - -XX:+PrintGCTimeStamps
+  - -XX:+PrintGCDateStamps
+  - -XX:+PrintGCApplicationStoppedTime
+  - -XX:+PrintGCApplicationConcurrentTime
+  - -XX:+UseGCLogFileRotation
+  - -XX:NumberOfGCLogFiles=10
+  - -XX:GCLogFileSize=5M
+  - -Xloggc:{{ gemfire_log_dir }}/{{ ansible_hostname}}.gc
+  - -XX:MaxMetaspaceSize=256m
+  - -XX:+PrintTenuringDistribution
+  - -XX:SurvivorRatio=4
+  - -XX:TargetSurvivorRatio=85
+  - -XX:ThreadStackSize=384k
+  - -XX:+UseConcMarkSweepGC
+  - -XX:+UseCMSInitiatingOccupancyOnly
+  - -XX:CMSInitiatingOccupancyFraction=70
+  - -XX:+CMSClassUnloadingEnabled
+  - -XX:OldPLABSize=16
+  - -Dp2p.HANDSHAKE_POOL_SIZE=20
+  - -Djava.net.preferIPv4Stack=true
+  - -XX:MaxDirectMemorySize=256M
+  - -XX:+ExplicitGCInvokesConcurrent
+  - -XX:+CMSClassUnloadingEnabled
+  - -XX:+ExplicitGCInvokesConcurrentAndUnloadsClasses
+  - -XX:+UnlockDiagnosticVMOptions
+  - -XX:ParGCCardsPerStrideChunk=32768
+  - -XX:+ScavengeBeforeFullGC
+  - -XX:+CMSScavengeBeforeRemark
+  - -XX:+CMSParallelRemarkEnabled
+  - -XX:+AlwaysPreTouch
+
+# JVM cache server configurations
+jvmcacheserverconfig:
+  - -Xms64g
+  - -Xmx64g
+  - -XX:NewSize=20g
+  - -XX:MaxNewSize=20g
+  - -XX:+UseParNewGC
+  - -XX:+DisableExplicitGC
+  - -XX:+PrintGC
+  - -XX:+PrintGCDetails
+  - -XX:+PrintGCTimeStamps
+  - -XX:+PrintGCDateStamps
+  - -XX:+PrintGCApplicationStoppedTime
+  - -XX:+PrintGCApplicationConcurrentTime
+  - -XX:+UseGCLogFileRotation
+  - -XX:NumberOfGCLogFiles=10
+  - -XX:GCLogFileSize=5M
+  - -Xloggc:{{ gemfire_log_dir }}/{{ ansible_hostname}}.gc
+  - -XX:MaxMetaspaceSize=256m
+  - -XX:+PrintTenuringDistribution
+  - -XX:SurvivorRatio=4
+  - -XX:TargetSurvivorRatio=85
+  - -XX:ThreadStackSize=384k
+  - -XX:+UseConcMarkSweepGC
+  - -XX:+UseCMSInitiatingOccupancyOnly
+  - -XX:CMSInitiatingOccupancyFraction=70
+  - -XX:+CMSClassUnloadingEnabled
+  - -XX:OldPLABSize=16
+  - -Dp2p.HANDSHAKE_POOL_SIZE=20
+  - -Djava.net.preferIPv4Stack=true
+  - -XX:MaxDirectMemorySize=256M
+  - -XX:+ExplicitGCInvokesConcurrent
+  - -XX:+CMSClassUnloadingEnabled
+  - -XX:+ExplicitGCInvokesConcurrentAndUnloadsClasses
+  - -XX:+UnlockDiagnosticVMOptions
+  - -XX:ParGCCardsPerStrideChunk=32768
+  - -XX:+ScavengeBeforeFullGC
+  - -XX:+CMSScavengeBeforeRemark
+  - -XX:+CMSParallelRemarkEnabled
+  - -XX:+AlwaysPreTouch
+  - -DEXPIRY_THREADS=2
+  - -Dgemfire.tombstone-gc-threshold=15000
+
+
+# Gemfire locator and cache member common properties
+commonconfig:
+  distributed-system-id:  1
+  conserve-sockets: false
+  mcast-port: 0
+  socket-buffer-size: 32768
+  enable-network-partition-detection: true
+  log-level: config
+  log-file: "{{ gemfire_log_dir }}/{{ ansible_hostname }}.log"
+  statistic-sampling-enabled: true
+  statistic-sample-rate: 1000
+  statistic-archive-file: "{{ gemfire_log_dir }}/{{ ansible_hostname }}.gfs"
+  archive-file-size-limit: 100
+  archive-disk-space-limit: 9000
+  enable-time-statistics: false
+  enable-cluster-configuration: true
+  disable-auto-reconnect: true
+  server-bind-address: "{{ ansible_default_ipv4.address }}"
+
+
+#Gemfire locator properties
+locatorconfig:
+  log-file-size-limit: 100
+  log-disk-space-limit: 9000
+  jmx-manager:  true
+  jmx-manager-start: true
+  jmx-manager-bind-address: "{{ ansible_hostname }}"
+  jmx-manager-port: 1099
+  http-service-port:  0
+
+
+#Gemfire server properties
+cacheserverconfig:
+  locator-wait-time: 60
+  log-file-size-limit: 100
+  log-disk-space-limit: 9000
+  membership-port-range: 50000-50550
+
+#TLS configurations:
+# self or any other provider name
+ssl_provider: self
+ssl_cert_dir: /web/security/sslcerts
+
+# Gemfire SSL/TLS configuration params. To turn off SSL, comment out sslconfig
+#sslconfig:
+#  ssl-enabled-components: server,jmx,locator
+#  ssl-protocols: TLSv1.2
+#  ssl-ciphers: TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
+#  ssl-keystore: "{{ ssl_cert_dir }}/gemfire-keystore.jks"
+#  ssl-truststore: "{{ ssl_cert_dir }}/gemfire-truststore.jks"
+#  ssl-truststore-password: changeit
+#  ssl-jmx-alias: gemfire
+#  ssl-locator-alias: gemfire
+#  ssl-keystore-type: JKS
+#  ssl-truststore-type: JKS

@@ -1,0 +1,52 @@
+- name: set first host
+  set_fact:
+    control_host: "{{ ansible_play_hosts | first }}"
+
+- name: create ssl directory
+  file:
+    path: "{{ ssl_cert_dir }}"
+    state: directory
+
+- name: generate key store on {{ control_host}}
+  shell: "{{jdk_home_path}}latest/bin/keytool -genkey -alias {{ sslconfig['ssl-default-alias'] }} -keyalg RSA -dname 'CN=trusted' -validity 3650 -keypass {{ sslconfig['ssl-keystore-password'] }} -storepass {{ sslconfig['ssl-truststore-password'] }} -keystore {{ sslconfig['ssl-keystore'] }}"
+  ignore_errors: true
+  when: inventory_hostname == control_host
+
+- name: export key store on {{ control_host}}
+  shell: "{{jdk_home_path}}latest/bin/keytool -export -alias {{ sslconfig['ssl-default-alias'] }} -storepass {{ sslconfig['ssl-truststore-password'] }} -file {{ ssl_cert_dir }}/gemfire-pub.cer -keystore {{ sslconfig['ssl-keystore'] }}"
+  ignore_errors: true
+  when: inventory_hostname == control_host
+
+- name: add a certificate to truststore on {{ control_host}}
+  shell: "{{jdk_home_path}}latest/bin/keytool -noprompt -import -v -trustcacerts -alias {{ sslconfig['ssl-default-alias'] }} -file {{ ssl_cert_dir }}/gemfire-pub.cer -keystore {{ sslconfig['ssl-truststore'] }} -keypass {{ sslconfig['ssl-keystore-password'] }} -storepass {{ sslconfig['ssl-truststore-password'] }}"
+  ignore_errors: true
+  when: inventory_hostname == control_host
+
+# Need to copy the $SECURITY_DIR/keystore.jks and $SECURITY_DIR/truststore.jks to each member
+# on current cluster and REMOTE cluster
+
+- name: copy to local
+  fetch:
+    src: "{{ item }}"
+    dest: /tmp/
+  with_items:
+    - "{{ sslconfig['ssl-keystore'] }}"
+    - "{{ sslconfig['ssl-truststore'] }}"
+  when: inventory_hostname == control_host
+
+- name: Copy keystore and trust store to other members
+  copy:
+    src: "{{ item }}"
+    dest: "{{ ssl_cert_dir }}"
+  with_items:
+    - "/tmp/{{ control_host }}{{ sslconfig['ssl-keystore'] }}"
+    - "/tmp/{{ control_host }}{{ sslconfig['ssl-truststore'] }}"
+  when: inventory_hostname != control_host
+
+- name: Change file permissions
+  file:
+    path: "{{ item }}"
+    mode: '0644'
+  with_items:
+    - "{{ sslconfig['ssl-keystore'] }}"
+    - "{{ sslconfig['ssl-truststore'] }}"

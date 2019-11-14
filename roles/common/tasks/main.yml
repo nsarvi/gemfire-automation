@@ -1,0 +1,52 @@
+# Performs common tasks
+---
+- name: check if ssl is configured
+  set_fact:
+    ssl_configured: "{{ sslconfig['ssl-enabled-components'] }}"
+  when: sslconfig is defined
+
+- name: disable and stop cache servers if re-provision the gemfire cluster
+  become: true
+  systemd:
+    name: gemfire-server.service
+    enabled: false
+    state: stopped
+  ignore_errors: yes
+  when: inventory_hostname in groups['cacheservers']
+
+- name: disable and stop locators if re-provision the gemfire cluster
+  become: true
+  systemd:
+    name: gemfire-locator.service
+    enabled: false
+    state: stopped
+  ignore_errors: yes
+  when: inventory_hostname in groups['locators']
+
+- name: Disable SELinux
+  selinux:
+    state: disabled
+
+- name: check if ntp is configured
+  set_fact:
+    ntp_server: "{{ ntp_servers[0] }}"
+  when: ntp_servers is defined
+  
+- name: setup ntp
+  include_tasks: ntp.yml
+  when : ntp_servers is defined
+
+- name: setup /etc/sysctl.conf file
+  include_tasks: update-os-configurations.yml
+
+- name: create gemfire group and user
+  include_tasks: create-gemfire-user.yml
+
+- name: install jdk
+  include_tasks: install-jdk.yml
+
+- name: install gemfire
+  include_tasks: install-gemfire.yml
+
+- name: configure base for the gemfire classic cluster
+  include_tasks: configure-gemfire-base.yml

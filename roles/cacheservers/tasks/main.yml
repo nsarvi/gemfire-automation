@@ -1,0 +1,4 @@
+# Performs cache server tasks
+---
+- name: configure cache server
+  include_tasks: configure-cacheserver.yml

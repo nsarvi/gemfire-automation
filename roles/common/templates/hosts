@@ -1,0 +1,9 @@
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+{% for host in groups['locators'] %}
+{{ hostvars[host]['ansible_default_ipv4']['address'] }}  {{ hostvars[host]['hostname_for_clients'] }}
+{% endfor %}
+{% for host in groups['cacheservers'] %}
+{{ hostvars[host]['ansible_default_ipv4']['address'] }}  {{ hostvars[host]['hostname_for_clients'] }}
+{% endfor %}

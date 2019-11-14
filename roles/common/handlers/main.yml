@@ -1,0 +1,6 @@
+---
+- name: reload sysctl.conf
+  command: /sbin/sysctl -p
+
+- name: restart ntpd
+  service: name=ntpd state=restarted

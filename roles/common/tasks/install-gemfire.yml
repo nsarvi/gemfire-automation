@@ -1,0 +1,57 @@
+---
+- name: initial gemfire update flag
+  set_fact:
+    update_gemfire: true
+
+- name: "verify that {{ gemfire_base_name }} isn't already installed"
+  find:
+    paths: "{{ gemfire_home }}"
+    patterns: "{{ gemfire_base_name }}"
+    file_type: directory
+  register: existing_gemfire
+
+- name: Create a directory {{gemfire_base_name}} if it does not exist
+  file:
+    path: "{{ gemfire_home }}"
+    state: directory
+  when: existing_gemfire.files | length == 0
+
+- block:
+  - debug:
+      msg: "gemfire directory {{ gemfire_base_name }} already exists - skipping update"
+  - set_fact:
+      update_gemfire: false
+  when: existing_gemfire.files | length > 0
+
+- block:
+  - name: locate existing gemfire
+    find:
+      paths: "{{ gemfire_home }}"
+      patterns: "*gemfire*"
+      file_type: directory
+    register: existing_gemfire
+
+- name: copy gemfire file {{ gemfire_file_name }} to remote machine
+  copy:
+    src: ../files/{{ gemfire_file_name }}
+    dest: /tmp
+
+- name: untar gemfire from file "{{ gemfire_base_name }}.tar.gz"
+  unarchive:
+    src: "/tmp/{{ gemfire_file_name }}"
+    dest: "{{ gemfire_home }}"
+    remote_src: yes
+
+- name: Change ownership to gemfire
+  file: state=directory path="{{ gemfire_home }}" owner="{{ gemfire_user }}" group="{{ gemfire_group }}" recurse=yes
+
+- name: create symlimk for gemfire
+  file:
+    src: "{{ gemfire_home }}{{ gemfire_base_name }}"
+    dest: /opt/gemfire
+    state: link
+
+- name: add gemfire to path
+  template:
+    src: gemfire.sh.j2
+    dest: /etc/profile.d/gemfire.sh

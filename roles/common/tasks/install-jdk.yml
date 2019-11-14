@@ -1,0 +1,43 @@
+---
+- name: Copy jdk rpm file {{ jdk_file_name }} to remote machine
+  copy:
+    src: ../files/{{ jdk_file_name }}
+    dest: /tmp
+
+- name: Check if {{ jdk_file_name | replace('.gz','') }} exists
+  stat:
+    path: "/tmp/{{ jdk_file_name  | replace('.gz','') }}"
+  register: archive_jdk_file
+
+- name: Create a directory {{jdk_home_path}} if it does not exist
+  file:
+    path: "{{jdk_home_path}}"
+    state: directory
+
+- name: gunzip archive {{ jdk_file_name }}
+  command:  gunzip "/tmp/{{ jdk_file_name}}"
+  when: archive_jdk_file.stat.exists == False
+
+- name: Unpack archive {{ jdk_file_name | replace('.gz','') }}
+  unarchive:
+    src: "/tmp/{{ jdk_file_name  | replace('.gz','') }}"
+    dest: "{{jdk_home_path}}"
+    remote_src: yes
+
+- name: set java directory directory {{jdk_home_path}}jdk{{ jdk_version }}
+  set_fact:
+    java_home_dir: "{{jdk_home_path}}jdk{{ jdk_version }}"
+
+- name: Change ownership to {{ java_home_dir }}
+  file: state=directory path="{{ java_home_dir }}" owner="{{ gemfire_user }}" group="{{ gemfire_group }}" recurse=yes
+
+- name: Create a symbolic link from {{ java_home_dir }} to /opt/jdk/latest
+  file:
+    src: "{{ java_home_dir }}"
+    dest: /opt/jdk/latest
+    owner: "{{ gemfire_user }}"
+    group: "{{ gemfire_group }}"
+    state: link
+
+- name: Make Java available for system
+  command: 'alternatives --install "/usr/bin/java" "java" "/opt/jdk/latest/bin/java" 2000'

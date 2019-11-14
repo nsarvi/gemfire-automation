@@ -1,0 +1,3 @@
+# Host specific configurations
+hostconfig:
+  redundancy-zone: zone1

@@ -1,0 +1,14 @@
+GEMFIRE_WORKING_DIR={{ gemfire_working_dir }}
+
+JVM_ARGS= {% for config in jvmcacheserverconfig %}
+ --J={{ config }}
+{%- if loop.last %}{% endif %}
+{% endfor %}
+
+
+GEMFIRE_OPTS=\
+  --dir={{ gemfire_working_dir }} \
+  --name={{ ansible_hostname }} \
+  --server-port={{ server_port }} \
+  --use-cluster-configuration=true \
+  --properties-file=/etc/gemfire.properties 

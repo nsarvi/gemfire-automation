@@ -1,0 +1,50 @@
+---
+- name: "copy sysctl.conf properties"
+  template:
+    src: sysctl.conf
+    dest: /etc/sysctl.conf
+
+- name : update sysctl configs
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+  with_dict: "{{ sysctlconfig }}"
+
+- name: "copy limits.conf properties "
+  template:
+    src: limits.conf
+    dest: /etc/security/limits.conf
+
+- name : update limits configs
+  pam_limits:
+    domain: "{{ item.domain }}"
+    limit_type: "{{ item.limit_type }}"
+    limit_item: "{{ item.limit_item }}"
+    value: "{{ item.value }}"
+  with_items: "{{ limitsconfig }}"
+
+- name: Stop and disable firewalld.
+  service:
+    name: firewalld
+    state: stopped
+    enabled: False
+
+- name: disable THP during boot time
+  lineinfile:
+    dest: /etc/default/grub
+    line: "{{ item }}"
+  with_items:
+    - transparent_hugepage=never
+
+- name: disable THP during runtime
+  shell: " {{ item }}"
+  with_items:
+      - echo never > /sys/kernel/mm/transparent_hugepage/enabled
+      - echo never > /sys/kernel/mm/transparent_hugepage/defrag
+
+- name: Reload Sysctl
+  command: /bin/true
+  notify:
+    - reload sysctl.conf

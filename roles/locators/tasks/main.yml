@@ -1,0 +1,19 @@
+# Performs locator tasks
+---
+- name: configure locator
+  include_tasks: configure-locator.yml
+
+- name: create directory for gfsh scripts
+  file:
+    path: "{{ gemfire_user_home }}/gfsh"
+    state: directory
+    owner: "{{ gemfire_user }}"
+    group: "{{ gemfire_user }}"
+
+- name: create gemfire gfsh files
+  template:
+    src: "{{ item }}"
+    dest: "{{ gemfire_user_home }}/gfsh/{{ item | basename | regex_replace('.j2','') }}"
+    mode: 0644
+  with_fileglob:
+    - "templates/gfsh/*.gfsh.j2"

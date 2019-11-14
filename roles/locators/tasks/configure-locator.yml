@@ -1,0 +1,36 @@
+# Configure Locator
+---
+- name: set fact for locators by using hostvars information
+  set_fact:
+    locator_spec: "{% set comma = joiner(',') %}{% for host in groups['locators'] -%}{{ comma() }}{{ hostvars[host]['hostname_for_clients'] }}[{{ locator_port }}]{%- endfor %}"
+    cacheable: yes
+
+- name: defnine dynamic variables
+  set_fact:
+    jvm_yg_mem: "{{ (ansible_memtotal_mb * 0.8 * 0.1) | int }}"
+    jvm_mem: "{{ (ansible_memtotal_mb * 0.8 * 0.9) | int }}"
+
+- name: "copy properties file to /etc/gemfire.properties"
+  template:
+    src: "gemfire.properties"
+    dest: /etc/gemfire.properties
+
+- name: setup /etc/gemfire.conf file
+  template:
+    src: "gemfire.conf.j2"
+    dest: /etc/gemfire.conf
+    mode: 0644
+
+- name: create gemfire locator systemd unit
+  template:
+    src: "gemfire-locator.service.j2"
+    dest: "/usr/lib/systemd/system/gemfire-locator.service"
+
+- name: force systemd to reload services
+  systemd: daemon_reload=yes
+
+- name: enable but stop gemfire service
+  systemd:
+    name: "gemfire-locator.service"
+    enabled: true
+    state: stopped

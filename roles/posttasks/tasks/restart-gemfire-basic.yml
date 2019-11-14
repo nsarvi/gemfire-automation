@@ -1,0 +1,32 @@
+---
+- name: restart locators
+  become: true
+  systemd:
+    name: "gemfire-locator.service"
+    state: restarted
+  when: inventory_hostname in groups['locators']
+
+- name: wait for gemfire locator to start
+  vars:
+    - log_file_search_regex: "Locator started"
+  wait_for:
+    path: "{{ gemfire_log_dir }}/{{ ansible_hostname }}.log"
+    state: present
+    search_regex: "{{ log_file_search_regex }}"
+  when: inventory_hostname in groups['locators']
+
+- name: restart cache server
+  become: true
+  systemd:
+    name: "gemfire-server.service"
+    state: restarted
+  when: inventory_hostname in groups['cacheservers']
+
+- name: wait for cache server to start
+  vars:
+    - log_file_search_regex: "CacheServer Configuration"
+  wait_for:
+    path: "{{ gemfire_log_dir }}/{{ ansible_hostname }}.log"
+    state: present
+    search_regex: "{{ log_file_search_regex }}"
+  when: inventory_hostname in groups['cacheservers']

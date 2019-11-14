@@ -1,0 +1,15 @@
+#TLS configurations: To turn off SSL, comment out
+# self or any other provider name
+ssl_provider: self
+ssl_cert_dir: /web/security/sslcerts
+
+# Gemfire SSL/TLS configuration params
+#sslconfig:
+#  ssl-enabled-components: server
+#  ssl-default-alias: gemfire
+#  ssl-protocols: any
+#  ssl-ciphers: SSL_RSA_WITH_NULL_MD5, SSL_RSA_WITH_NULL_SHA
+#  ssl-keystore: "{{ ssl_cert_dir }}/gemfire-keystore.jks"
+#  ssl-keystore-password: changeit
+#  ssl-truststore: "{{ ssl_cert_dir }}/gemfire-truststore.jks"
+#  ssl-truststore-password: changeit

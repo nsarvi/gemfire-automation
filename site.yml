@@ -1,0 +1,23 @@
+# This Playbook would config and start the gemfire cluster
+
+# Apply common configuration to all hosts
+- hosts: all
+  roles:
+  - common
+
+# Configure locators
+- hosts: locators
+  roles:
+  - locators
+
+# Configure cache servers`
+- hosts: cacheservers
+  roles:
+  - cacheservers
+
+# start locator and cache servers`
+- hosts: all
+  roles:
+  - posttasks
+
+# Configure WAN replication

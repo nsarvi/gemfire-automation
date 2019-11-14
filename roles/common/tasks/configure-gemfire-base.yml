@@ -1,0 +1,57 @@
+---
+- setup:
+    filter: 'ansible_mem*'
+
+- name: grep and register
+  shell: echo $HOME
+  become: true
+  become_user: "{{ gemfire_user }}"
+  changed_when: false
+  register: gemfire_user_home_var
+
+- name: set gemfire user home directory
+  set_fact:
+    gemfire_user_home: "{{ gemfire_user_home_var.stdout }}"
+
+- name: set data directory {{ gemfire_data_dir}}
+  set_fact:
+    gemfire_data_dir: "{{ gemfire_user_home_var.stdout }}/data"
+  when: gemfire_data_dir is undefined
+
+- name: set log directory {{ gemfire_log_dir}}
+  set_fact:
+    gemfire_log_dir: "{{ gemfire_user_home_var.stdout }}/logs"
+  when: gemfire_log_dir is undefined
+
+- name: set working directory {{ gemfire_working_dir}}
+  set_fact:
+    gemfire_working_dir: "{{ gemfire_user_home_var.stdout }}/working"
+  when: gemfire_working_dir is undefined
+
+- name: create gemfire user app, conf, data, backups,logs, services, deploy lib directory and working dir under {{ gemfire_user_home }}
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ gemfire_user }}"
+    group: "{{ gemfire_group }}"
+  with_items:
+    - "{{ gemfire_user_home }}/lib"
+    - "{{ gemfire_user_home }}/conf"
+    - "{{ gemfire_user_home }}/backups"
+    - "{{ gemfire_user_home }}/services"
+    - "{{ gemfire_user_home }}/deploy"
+    - "{{ gemfire_data_dir }}"
+    - "{{ gemfire_log_dir }}"
+    - "{{ gemfire_working_dir }}"
+
+- name: setup hosts file
+  template:
+    src: hosts
+    dest: /etc/hosts
+    mode: 0644
+
+- name: "set gfsecurity properties "
+  template:
+    src: gfsecurity.properties
+    dest: /etc/gfsecurity.properties
+  when: ssl_configured is defined and ssl_configured != ""
